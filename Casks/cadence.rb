@@ -1,27 +1,32 @@
 cask "cadence" do
-  version "2.1"
-  sha256 "32df5b97c3ddf9e73070485dbb6d697b115a6d3491ce495cfbdf7ed20d636074"
+  version "2.3"
+  sha256 "f7603b2b42d676acb1a678c9865e432bc056425c17b5ea67b3a0fd79feeed048"
 
   url "https://github.com/MatiasPC/Cadence/releases/download/v#{version}/Cadence.zip"
   name "Cadence"
   desc "Minimal macOS menu-bar monitor for Claude Code usage"
   homepage "https://github.com/MatiasPC/Cadence"
 
+  # Surfaces a stale cask in `brew livecheck`, so this pin can't silently rot
+  # again — it sat at 2.1 through two releases.
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
+
   # Cadence targets macOS 26 (Tahoe) for its Liquid Glass UI.
   depends_on macos: :tahoe
 
   app "Cadence.app"
 
-  # Cadence is not notarized (that needs a paid Apple Developer ID). Homebrew 6
-  # removed --no-quarantine, so strip the quarantine flag here instead — the same
-  # `xattr` step a manual installer would run, done automatically so the app
-  # opens without a Gatekeeper block.
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/Cadence.app"]
-  end
+  # No quarantine workaround here, deliberately. As of 2.2 Cadence is signed
+  # with a Developer ID and notarized by Apple, so Gatekeeper clears it on its
+  # own. Stripping the flag would only serve to hide a broken signature.
 
-  zap trash: "~/Library/Preferences/com.cadence.app.plist"
+  zap trash: [
+    "~/Library/Application Support/Cadence",
+    "~/Library/Preferences/com.cadence.app.plist",
+  ]
 
   caveats <<~EOS
     Cadence reads your usage through the `ccusage` CLI. Install it with:
